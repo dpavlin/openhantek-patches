@@ -15,7 +15,10 @@ TEMPLATE = app
 # Configuration
 CONFIG += \
 	warn_on \
-	qt
+	qt 
+
+#CONFIG += debug
+
 QT += opengl
 LIBS += -lfftw3
 
@@ -36,6 +39,8 @@ SOURCES += \
 	src/levelslider.cpp \
 	src/main.cpp \
 	src/openhantek.cpp \
+	src/logknob.cpp \
+	src/siscale.cpp \
 	src/settings.cpp \
 	src/sispinbox.cpp \
 	src/hantek/control.cpp \
@@ -56,6 +61,8 @@ HEADERS += \
 	src/helper.h \
 	src/levelslider.h \
 	src/openhantek.h \
+	src/logknob.h \
+	src/siscale.h \
 	src/settings.h \
 	src/sispinbox.h \
 	src/hantek/control.h \
@@ -114,6 +121,7 @@ else {
 	LIBS += -lusb-1.0
 }
 DEFINES += LIBUSB_VERSION=$${LIBUSB_VERSION}
+DEFINES += QWT
 
 # Debug output
 CONFIG(debug, debug|release): DEFINES += DEBUG
@@ -151,7 +159,10 @@ macx {
 	target.path = $${PREFIX}/Contents/MacOS
 	translations.path = $${PREFIX}/Contents/Resources/translations
 	INCLUDEPATH += $${INCLUDEPATH_QUOTE}
+	INCLUDEPATH += /opt/local/include/qwt
+	INCLUDEPATH += /opt/local/include/libusb-1.0
 	LIBS += -framework IOKit -framework CoreFoundation
+	LIBS += -lqwt
 	ICON = res/images/openhantek.icns
 	DEFINES += \
 		QMAKE_TRANSLATIONS_PATH=\\\"Contents/Resources/translations\\\" \

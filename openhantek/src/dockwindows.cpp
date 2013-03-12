@@ -1,23 +1,23 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  OpenHantek
-//  dockwindows.cpp
+//	OpenHantek
+//	dockwindows.cpp
 //
-//  Copyright (C) 2010  Oliver Haag
-//  oliver.haag@gmail.com
+//	Copyright (C) 2010	Oliver Haag
+//	oliver.haag@gmail.com
 //
-//  This program is free software: you can redistribute it and/or modify it
-//  under the terms of the GNU General Public License as published by the Free
-//  Software Foundation, either version 3 of the License, or (at your option)
-//  any later version.
+//	This program is free software: you can redistribute it and/or modify it
+//	under the terms of the GNU General Public License as published by the Free
+//	Software Foundation, either version 3 of the License, or (at your option)
+//	any later version.
 //
-//  This program is distributed in the hope that it will be useful, but WITHOUT
-//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-//  more details.
+//	This program is distributed in the hope that it will be useful, but WITHOUT
+//	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//	FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//	more details.
 //
-//  You should have received a copy of the GNU General Public License along with
-//  this program.  If not, see <http://www.gnu.org/licenses/>.
+//	You should have received a copy of the GNU General Public License along with
+//	this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -28,10 +28,12 @@
 #include <QDockWidget>
 #include <QLabel>
 
-
 #include "dockwindows.h"
 
 #include "settings.h"
+#ifdef QWT
+#include "logknob.h"
+#endif
 #include "sispinbox.h"
 #include "helper.h"
 
@@ -51,20 +53,37 @@ HorizontalDock::HorizontalDock(DsoSettings *settings, QWidget *parent, Qt::Windo
 	this->samplerateSiSpinBox->setMinimum(1);
 	this->samplerateSiSpinBox->setMaximum(1e8);
 	this->samplerateSiSpinBox->setUnitPostfix("/s");
+		
+	#ifdef QWT
+		this->timebaseKnob = new LogKnob(Helper::UNIT_SECONDS, QString(tr("Timebase")));
+		this->timebaseKnob->setRange( 0.5e-9, 1e3 );
+		this->timebaseKnob->setKnobWidth( 75 );
+		this->timebaseKnob->setBorderWidth( 3 );
+		#ifdef QWT60
+			this->timebaseKnob->setKnobStyle( QwtKnob::Raised );
+			this->timebaseKnob->setMarkerStyle( QwtKnob::Notch );
+		#endif
+	#else
+		QList<double> timebaseSteps;
+		timebaseSteps << 1.0 << 2.0 << 4.0 << 10.0;
+		this->timebaseLabel = new QLabel(tr("Timebase"));
+		this->timebaseSiSpinBox = new SiSpinBox(Helper::UNIT_SECONDS);
+		this->timebaseSiSpinBox->setSteps(timebaseSteps);
+		this->timebaseSiSpinBox->setMinimum(1e-9);
+		this->timebaseSiSpinBox->setMaximum(3.6e3);
+	#endif
 	
-	QList<double> timebaseSteps;
-	timebaseSteps << 1.0 << 2.0 << 4.0 << 10.0;
-	
-	this->timebaseLabel = new QLabel(tr("Timebase"));
-	this->timebaseSiSpinBox = new SiSpinBox(Helper::UNIT_SECONDS);
-	this->timebaseSiSpinBox->setSteps(timebaseSteps);
-	this->timebaseSiSpinBox->setMinimum(1e-9);
-	this->timebaseSiSpinBox->setMaximum(3.6e3);
-	
-	this->frequencybaseLabel = new QLabel(tr("Frequencybase"));
-	this->frequencybaseSiSpinBox = new SiSpinBox(Helper::UNIT_HERTZ);
-	this->frequencybaseSiSpinBox->setMinimum(1.0);
-	this->frequencybaseSiSpinBox->setMaximum(100e6);
+	#ifdef QWT
+		this->frequencybaseKnob = new LogKnob(Helper::UNIT_HERTZ, QString(tr("Frequencybase")));
+		this->frequencybaseKnob->setRange( 1.0, 100e6);
+		this->frequencybaseKnob->setKnobWidth( 75 );
+		this->frequencybaseKnob->setBorderWidth( 3 );
+	#else
+		this->frequencybaseLabel = new QLabel(tr("Frequencybase"));
+		this->frequencybaseSiSpinBox = new SiSpinBox(Helper::UNIT_HERTZ);
+		this->frequencybaseSiSpinBox->setMinimum(1.0);
+		this->frequencybaseSiSpinBox->setMaximum(100e6);
+	#endif
 	
 	this->recordLengthLabel = new QLabel(tr("Record length"));
 	this->recordLengthComboBox = new QComboBox();
@@ -76,14 +95,21 @@ HorizontalDock::HorizontalDock(DsoSettings *settings, QWidget *parent, Qt::Windo
 	
 	this->dockLayout = new QGridLayout();
 	this->dockLayout->setColumnMinimumWidth(0, 64);
-	this->dockLayout->setColumnStretch(1, 1);
+	this->dockLayout->setColumnStretch(1, 0);
+	this->dockLayout->setSpacing(0);
+	
 	this->dockLayout->addWidget(this->samplerateLabel, 0, 0);
 	this->dockLayout->addWidget(this->samplerateSiSpinBox, 0, 1);
-	this->dockLayout->addWidget(this->timebaseLabel, 1, 0);
-	this->dockLayout->addWidget(this->timebaseSiSpinBox, 1, 1);
-	this->dockLayout->addWidget(this->frequencybaseLabel, 2, 0);
-	this->dockLayout->addWidget(this->frequencybaseSiSpinBox, 2, 1);
 	this->dockLayout->addWidget(this->recordLengthLabel, 3, 0);
+	#ifdef QWT
+		this->dockLayout->addWidget(this->timebaseKnob, 2, 0);
+		this->dockLayout->addWidget(this->frequencybaseKnob, 2, 1);
+	#else
+		this->dockLayout->addWidget(this->timebaseLabel, 1, 0);
+		this->dockLayout->addWidget(this->timebaseSiSpinBox, 1, 1);
+		this->dockLayout->addWidget(this->frequencybaseLabel, 2, 0);
+		this->dockLayout->addWidget(this->frequencybaseSiSpinBox, 2, 1);
+	#endif
 	this->dockLayout->addWidget(this->recordLengthComboBox, 3, 1);
 	this->dockLayout->addWidget(this->formatLabel, 4, 0);
 	this->dockLayout->addWidget(this->formatComboBox, 4, 1);
@@ -96,8 +122,13 @@ HorizontalDock::HorizontalDock(DsoSettings *settings, QWidget *parent, Qt::Windo
 	
 	// Connect signals and slots
 	connect(this->samplerateSiSpinBox, SIGNAL(valueChanged(double)), this, SLOT(samplerateSelected(double)));
-	connect(this->timebaseSiSpinBox, SIGNAL(valueChanged(double)), this, SLOT(timebaseSelected(double)));
-	connect(this->frequencybaseSiSpinBox, SIGNAL(valueChanged(double)), this, SLOT(frequencybaseSelected(double)));
+	#ifdef QWT
+		connect( this->timebaseKnob, SIGNAL(valueChanged(double)), this, SLOT(timebaseSelected(double)));
+		connect( this->frequencybaseKnob, SIGNAL(valueChanged(double)), this, SLOT(frequencybaseSelected(double)));
+	#else
+		connect(this->timebaseSiSpinBox, SIGNAL(valueChanged(double)), this, SLOT(timebaseSelected(double)));
+		connect(this->frequencybaseSiSpinBox, SIGNAL(valueChanged(double)), this, SLOT(frequencybaseSelected(double)));
+	#endif
 	connect(this->recordLengthComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(recordLengthSelected(int)));
 	connect(this->formatComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(formatSelected(int)));
 	
@@ -125,7 +156,11 @@ void HorizontalDock::closeEvent(QCloseEvent *event) {
 /// \param frequencybase The frequencybase in hertz.
 void HorizontalDock::setFrequencybase(double frequencybase) {
 	this->suppressSignals = true;
-	this->frequencybaseSiSpinBox->setValue(frequencybase);
+	#ifdef QWT
+		this->frequencybaseKnob->setValue(frequencybase);
+	#else
+		this->frequencybaseSiSpinBox->setValue(frequencybase);
+	#endif
 	this->suppressSignals = false;
 }
 
@@ -141,7 +176,11 @@ void HorizontalDock::setSamplerate(double samplerate) {
 /// \param timebase The timebase in seconds.
 void HorizontalDock::setTimebase(double timebase) {
 	this->suppressSignals = true;
-	this->timebaseSiSpinBox->setValue(timebase);
+	#ifdef QWT
+		this->timebaseKnob->setValue(timebase);
+	#else
+		this->timebaseSiSpinBox->setValue(timebase);
+	#endif
 	this->suppressSignals = false;
 }
 
@@ -231,11 +270,31 @@ void HorizontalDock::samplerateSelected(double samplerate) {
 /// \brief Called when the timebase spinbox changes its value.
 /// \param timebase The timebase in seconds.
 void HorizontalDock::timebaseSelected(double timebase) {
-	this->settings->scope.horizontal.timebase = timebase;
+	double timebaseExp = this->calcKnobValue(timebase);
+	this->settings->scope.horizontal.timebase = timebaseExp;
 	if(!this->suppressSignals) {
 		this->settings->scope.horizontal.samplerateSet = false;
 		emit timebaseChanged(timebase);
 	}
+}
+
+/// \brief Calculate value from a logarithmic knob.
+/// \param the current knob value.
+double HorizontalDock::calcKnobValue(double val) {
+	double ival=floor(val);
+	double frac=val-ival;
+	double dt=0;
+
+	if (frac >=0.9) frac=1.0;
+	else if (frac>=0.66) frac=log10(5.0);
+	else if (frac>=log10(2.0)) frac=log10(2.0);
+	else if (frac>=log10(3.0)) frac=log10(3.0);
+	else frac=0.0;
+	dt=pow(10,frac)*pow(10,ival);
+
+	qDebug("calcKnobValue, val:%f dt:%f", val, dt);
+
+	return dt;
 }
 
 /// \brief Called when the record length combo box changes its value.
@@ -406,8 +465,8 @@ SpectrumDock::SpectrumDock(DsoSettings *settings, QWidget *parent, Qt::WindowFla
 	this->settings = settings;
 	
 	// Initialize lists for comboboxes
-	this->magnitudeSteps                <<  1e0 <<  2e0 <<  3e0 <<  6e0
-			<<  1e1 <<  2e1 <<  3e1 <<  6e1 <<  1e2 <<  2e2 <<  3e2 <<  6e2; ///< Magnitude steps in dB/div
+	this->magnitudeSteps				<<	1e0 <<	2e0 <<	3e0 <<	6e0
+			<<	1e1 <<	2e1 <<	3e1 <<	6e1 <<	1e2 <<	2e2 <<	3e2 <<	6e2; ///< Magnitude steps in dB/div
 	for(QList<double>::iterator magnitude = this->magnitudeSteps.begin(); magnitude != this->magnitudeSteps.end(); ++magnitude)
 		this->magnitudeStrings << Helper::valueToString(*magnitude, Helper::UNIT_DECIBEL, 0);
 	
@@ -537,32 +596,59 @@ VoltageDock::VoltageDock(DsoSettings *settings, QWidget *parent, Qt::WindowFlags
 	for(int mode = Dso::MATHMODE_1ADD2; mode < Dso::MATHMODE_COUNT; ++mode)
 		this->modeStrings.append(Dso::mathModeString((Dso::MathMode) mode));
 	
-	this->gainSteps             << 1e-2 << 2e-2 << 5e-2 << 1e-1 << 2e-1 << 5e-1
-			<<  1e0 <<  2e0 <<  5e0;          ///< Voltage steps in V/div
-	for(QList<double>::iterator gain = this->gainSteps.begin(); gain != this->gainSteps.end(); ++gain)
-		this->gainStrings << Helper::valueToString(*gain, Helper::UNIT_VOLTS, 0);
-	
 	// Initialize elements
-	for(int channel = 0; channel < this->settings->scope.voltage.count(); ++channel) {
-		this->miscComboBox.append(new QComboBox());
-		if(channel < (int) this->settings->scope.physicalChannels)
-			this->miscComboBox[channel]->addItems(this->couplingStrings);
-		else
-			this->miscComboBox[channel]->addItems(this->modeStrings);
+	#ifdef QWT
+		for(int channel = 0; channel < this->settings->scope.voltage.count(); ++channel) {
+			this->miscComboBox.append(new QComboBox());
+			if(channel < (int) this->settings->scope.physicalChannels)
+				this->miscComboBox[channel]->addItems(this->couplingStrings);
+			else
+				this->miscComboBox[channel]->addItems(this->modeStrings);
+			
+			this->gainKnob.append(new LogKnob(Helper::UNIT_VOLTS));
+			this->gainKnob[channel]->setRange( 1e-2, 5e0 );
+			this->gainKnob[channel]->setScaleMaxMinor( 2 );
+			this->gainKnob[channel]->setTickLabels( SiScale::MajorAndMinorTicks );
+			
+			this->usedCheckBox.append(new QCheckBox(this->settings->scope.voltage[channel].name));
+		}	 
+	#else
+		this->gainSteps << 1e-2 << 2e-2 << 5e-2 << 1e-1 << 2e-1 << 5e-1
+				<<	1e0 <<	2e0 <<	5e0;		  ///< Voltage steps in V/div
+		for(QList<double>::iterator gain = this->gainSteps.begin(); gain != this->gainSteps.end(); ++gain)
+			this->gainStrings << Helper::valueToString(*gain, Helper::UNIT_VOLTS, 0);
 		
-		this->gainComboBox.append(new QComboBox());
-		this->gainComboBox[channel]->addItems(this->gainStrings);
-		
-		this->usedCheckBox.append(new QCheckBox(this->settings->scope.voltage[channel].name));
+		for(int channel = 0; channel < this->settings->scope.voltage.count(); ++channel) {
+			this->miscComboBox.append(new QComboBox());
+			if(channel < (int) this->settings->scope.physicalChannels)
+				this->miscComboBox[channel]->addItems(this->couplingStrings);
+			else
+				this->miscComboBox[channel]->addItems(this->modeStrings);
+			
+			this->gainComboBox.append(new QComboBox());
+			this->gainComboBox[channel]->addItems(this->gainStrings);
+			
+			this->usedCheckBox.append(new QCheckBox(this->settings->scope.voltage[channel].name));
 	}
-	
+	#endif
 	this->dockLayout = new QGridLayout();
 	this->dockLayout->setColumnMinimumWidth(0, 64);
-	this->dockLayout->setColumnStretch(1, 1);
+	this->dockLayout->setColumnStretch(1, 0);
+	this->dockLayout->setSpacing(0);
+
 	for(int channel = 0; channel < this->settings->scope.voltage.count(); ++channel) {
-		this->dockLayout->addWidget(this->usedCheckBox[channel], channel * 2, 0);
-		this->dockLayout->addWidget(this->gainComboBox[channel], channel * 2, 1);
-		this->dockLayout->addWidget(this->miscComboBox[channel], channel * 2 + 1, 1);
+	#ifdef QWT
+//			this->dockLayout->addWidget(this->usedCheckBox[channel], 0, channel * 2);
+//			this->dockLayout->addWidget(this->miscComboBox[channel], 1, channel * 2 + 1);
+//			this->dockLayout->addWidget(this->gainKnob[channel], 2, channel * 2);
+			this->dockLayout->addWidget(this->usedCheckBox[channel], channel * 3, 0);
+			this->dockLayout->addWidget(this->miscComboBox[channel], channel * 3 +1, 0);
+			this->dockLayout->addWidget(this->gainKnob[channel], channel * 3 +2, 0);
+	#else
+			this->dockLayout->addWidget(this->usedCheckBox[channel], channel * 2, 0);
+			this->dockLayout->addWidget(this->gainComboBox[channel], channel * 2, 1);
+			this->dockLayout->addWidget(this->miscComboBox[channel], channel * 2 + 1, 1);
+	#endif
 	}
 
 	this->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -573,7 +659,9 @@ VoltageDock::VoltageDock(DsoSettings *settings, QWidget *parent, Qt::WindowFlags
 	
 	// Connect signals and slots
 	for(int channel = 0; channel < this->settings->scope.voltage.count(); ++channel) {
-		connect(this->gainComboBox[channel], SIGNAL(currentIndexChanged(int)), this, SLOT(gainSelected(int)));
+		#ifdef QWT
+			connect(this->gainKnob[channel], SIGNAL(valueChanged(double)), this, SLOT(gainSelected(double)));
+		#endif
 		connect(this->miscComboBox[channel], SIGNAL(currentIndexChanged(int)), this, SLOT(miscSelected(int)));
 		connect(this->usedCheckBox[channel], SIGNAL(toggled(bool)), this, SLOT(usedSwitched(bool)));
 	}
@@ -625,7 +713,11 @@ int VoltageDock::setGain(int channel, double gain) {
 	
 	int index = this->gainSteps.indexOf(gain);
 	if(index != -1)
-		this->gainComboBox[channel]->setCurrentIndex(index);
+		#ifdef QWT
+			this->gainKnob[channel]->setValue(index);
+		#else
+			this->gainComboBox[channel]->setCurrentIndex(index);
+		#endif
 	
 	return index;
 }
@@ -655,6 +747,33 @@ int VoltageDock::setUsed(int channel, bool used) {
 	return -1;
 }
 
+#ifdef QWT
+/// \brief Called when the gain knob value is changed
+/// \param value the knob's value
+void VoltageDock::gainSelected(double value) {
+	int channel;
+	double roundedValue;
+	double pow10Value;
+	
+	// Which knob was it?
+	for(channel = 0; channel < this->settings->scope.voltage.count(); ++channel)
+		if(this->sender() == this->gainKnob[channel]) break;
+	
+	// Send signal if it was one of the gain knobs
+	if(channel < this->settings->scope.voltage.count()) {
+		pow10Value = pow(10,value);
+		if (pow10Value <= 0.1) {
+			roundedValue = floor( pow10Value*100.0 + 0.5) / 100.0; }
+		else if (pow10Value <= 1) {
+			roundedValue = floor( pow10Value*10.0 + 0.5) / 10.0; }
+		else {
+			roundedValue = floor( pow10Value + 0.5); }
+		qDebug("gainSelected, value:%f pow10Value:%f roundedValue):%f", value, pow10Value, roundedValue );
+		this->settings->scope.voltage[channel].gain = roundedValue;
+		emit gainChanged(channel, this->settings->scope.voltage[channel].gain);
+	}
+}
+#else
 /// \brief Called when the gain combo box changes it's value.
 /// \param index The index of the combo box item.
 void VoltageDock::gainSelected(int index) {
@@ -662,16 +781,15 @@ void VoltageDock::gainSelected(int index) {
 	
 	// Which combobox was it?
 	for(channel = 0; channel < this->settings->scope.voltage.count(); ++channel)
-		if(this->sender() == this->gainComboBox[channel])
-			break;
+		if(this->sender() == this->gainComboBox[channel]) break;
 	
 	// Send signal if it was one of the comboboxes
 	if(channel < this->settings->scope.voltage.count()) {
 		this->settings->scope.voltage[channel].gain = this->gainSteps.at(index);
-		
 		emit gainChanged(channel, this->settings->scope.voltage[channel].gain);
 	}
 }
+#endif
 
 /// \brief Called when the misc combo box changes it's value.
 /// \param index The index of the combo box item.

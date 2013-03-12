@@ -50,7 +50,7 @@ class SiSpinBox : public QDoubleSpinBox
 		
 		QValidator::State validate(QString &input, int &pos) const;
 		double valueFromText(const QString &text) const;
-    QString textFromValue(double val) const;
+		QString textFromValue(double val) const;
 		void fixup(QString &input) const;
 		void stepBy(int steps);
 		bool setUnit(Helper::Unit unit);

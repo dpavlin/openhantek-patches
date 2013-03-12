@@ -1,24 +1,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  OpenHantek
+//	OpenHantek
 /// \file dockwindows.h
 /// \brief Declares the docking window classes.
 //
-//  Copyright (C) 2010  Oliver Haag
-//  oliver.haag@gmail.com
+//	Copyright (C) 2010	Oliver Haag
+//	oliver.haag@gmail.com
 //
-//  This program is free software: you can redistribute it and/or modify it
-//  under the terms of the GNU General Public License as published by the Free
-//  Software Foundation, either version 3 of the License, or (at your option)
-//  any later version.
+//	This program is free software: you can redistribute it and/or modify it
+//	under the terms of the GNU General Public License as published by the Free
+//	Software Foundation, either version 3 of the License, or (at your option)
+//	any later version.
 //
-//  This program is distributed in the hope that it will be useful, but WITHOUT
-//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-//  more details.
+//	This program is distributed in the hope that it will be useful, but WITHOUT
+//	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//	FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//	more details.
 //
-//  You should have received a copy of the GNU General Public License along with
-//  this program.  If not, see <http://www.gnu.org/licenses/>.
+//	You should have received a copy of the GNU General Public License along with
+//	this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -26,14 +26,13 @@
 #ifndef DOCKWINDOWS_H
 #define DOCKWINDOWS_H
 
+#include <cmath>
 
 #include <QDockWidget>
 #include <QGridLayout>
 
-
 #include "dso.h"
 #include "settings.h"
-
 
 class QLabel;
 class QCheckBox;
@@ -41,9 +40,13 @@ class QComboBox;
 
 class SiSpinBox;
 
+#ifdef QWT
+//#include <qwt_knob.h>
+#include <logknob.h>
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class HorizontalDock                                          dockwindows.h
+/// \class HorizontalDock										   dockwindows.h
 /// \brief Dock window for the horizontal axis.
 /// It contains the settings for the timebase and the display format.
 class HorizontalDock : public QDockWidget {
@@ -61,20 +64,30 @@ class HorizontalDock : public QDockWidget {
 	
 	protected:
 		void closeEvent(QCloseEvent *event);
+		double calcKnobValue(double val);
 		
 		QGridLayout *dockLayout; ///< The main layout for the dock window
 		QWidget *dockWidget; ///< The main widget for the dock window
+
 		QLabel *samplerateLabel; ///< The label for the samplerate spinbox
 		QLabel *timebaseLabel; ///< The label for the timebase spinbox
 		QLabel *frequencybaseLabel; ///< The label for the frequencybase spinbox
 		QLabel *recordLengthLabel; ///< The label for the record length combobox
 		QLabel *formatLabel; ///< The label for the format combobox
-		SiSpinBox *samplerateSiSpinBox; ///< Selects the samplerate for aquisitions
-		SiSpinBox *timebaseSiSpinBox; ///< Selects the timebase for voltage graphs
-		SiSpinBox *frequencybaseSiSpinBox; ///< Selects the frequencybase for spectrum graphs
+
+		#ifdef QWT
+			SiSpinBox *samplerateSiSpinBox; ///< Selects the samplerate for aquisitions
+			LogKnob *samplerateLogKnob; ///< Selects the samplerate for aquisitions
+			LogKnob *timebaseKnob; ///< Selects the timebase for voltage graphs
+			LogKnob *frequencybaseKnob; ///< Selects the frequencybase for spectrum graphs
+		#else
+			SiSpinBox *samplerateSiSpinBox; ///< Selects the samplerate for aquisitions
+			SiSpinBox *timebaseSiSpinBox; ///< Selects the timebase for voltage graphs
+			SiSpinBox *frequencybaseSiSpinBox; ///< Selects the frequencybase for spectrum graphs
+		#endif
 		QComboBox *recordLengthComboBox; ///< Selects the record length for aquisitions
 		QComboBox *formatComboBox; ///< Selects the way the sampled data is interpreted and shown
-		
+
 		DsoSettings *settings; ///< The settings provided by the parent class
 		
 		QStringList formatStrings; ///< Strings for the formats
@@ -102,7 +115,7 @@ class HorizontalDock : public QDockWidget {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class TriggerDock                                             dockwindows.h
+/// \class TriggerDock											   dockwindows.h
 /// \brief Dock window for the trigger settings.
 /// It contains the settings for the trigger mode, source and slope.
 class TriggerDock : public QDockWidget {
@@ -148,7 +161,7 @@ class TriggerDock : public QDockWidget {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class VoltageDock                                             dockwindows.h
+/// \class VoltageDock											   dockwindows.h
 /// \brief Dock window for the voltage channel settings.
 /// It contains the settings for gain and coupling for both channels and
 /// allows to enable/disable the channels.
@@ -170,9 +183,12 @@ class VoltageDock : public QDockWidget {
 		QGridLayout *dockLayout; ///< The main layout for the dock window
 		QWidget *dockWidget; ///< The main widget for the dock window
 		QList<QCheckBox *> usedCheckBox; ///< Enable/disable a specific channel
-		QList<QComboBox *> gainComboBox; ///< Select the vertical gain for the channels
-		QList<QComboBox *> miscComboBox; ///< Select coupling for real and mode for math channels
-		
+		#ifdef QWT
+    		QList<LogKnob *> gainKnob; ///< Select the vertical gain for the channels
+        #else
+    		QList<QComboBox *> gainComboBox; ///< Select the vertical gain for the channels
+        #endif
+    	QList<QComboBox *> miscComboBox; ///< Select coupling for real and mode for math channels
 		DsoSettings *settings; ///< The settings provided by the parent class
 		
 		QStringList couplingStrings; ///< The strings for the couplings
@@ -181,7 +197,11 @@ class VoltageDock : public QDockWidget {
 		QStringList gainStrings; ///< String representations for the gain steps
 	
 	protected slots:
-		void gainSelected(int index);
+		#ifdef QWT
+		    void gainSelected(double value);
+		#else
+		    void gainSelected(int index);
+		#endif
 		void miscSelected(int index);
 		void usedSwitched(bool checked);
 	
@@ -194,7 +214,7 @@ class VoltageDock : public QDockWidget {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class SpectrumDock                                            dockwindows.h
+/// \class SpectrumDock											   dockwindows.h
 /// \brief Dock window for the spectrum view.
 /// It contains the magnitude for all channels and allows to enable/disable the
 /// channels.

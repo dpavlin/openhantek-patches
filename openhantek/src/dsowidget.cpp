@@ -63,6 +63,10 @@ DsoWidget::DsoWidget(DsoSettings *settings, DataAnalyzer *dataAnalyzer, QWidget 
 	this->zoomScope = new GlScope(this->settings);
 	this->zoomScope->setGenerator(this->generator);
 	this->zoomScope->setZoomMode(true);
+
+	// 2012-12-04 JvO Fix undrawn GLWidget, https://bugreports.qt-project.org/browse/QTBUG-8580
+	this->mainScope->hide();
+	this->mainScope->show();
 	
 	// The offset sliders for all possible channels
 	this->offsetSlider = new LevelSlider(Qt::RightArrow);
