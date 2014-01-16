@@ -147,9 +147,12 @@ unix:!macx {
 	else {
 		INCLUDEPATH += /usr/include/libusb-1.0
 	}
+	INCLUDEPATH += $${INCLUDEPATH_QUOTE}
+	INCLUDEPATH += /usr/include/qwt
 	DEFINES += \
 		QMAKE_TRANSLATIONS_PATH=\\\"$${translations.path}\\\" \
 		OS_UNIX VERSION=\\\"$${VERSION}\\\"
+	LIBS += -lqwt
 }
 macx { 
 	isEmpty(PREFIX): PREFIX = OpenHantek.app
